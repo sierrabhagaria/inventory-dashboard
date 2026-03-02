@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard | ABC Logistics</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            margin: 0;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+        }
+
+        nav {
+            background-color: #111;
+            padding: 15px;
+            text-align: center;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 25px;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        input, button {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        canvas {
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <a href="index.html">Dashboard</a>
+    <a href="about.html">Profile</a>
+</nav>
+
+<div class="container">
+
+<h1>Inventory Command Center</h1>
+
+<h3>Add Item</h3>
+
+<input type="text" id="itemName" placeholder="Item Name">
+<input type="number" id="itemQuantity" placeholder="Quantity">
+<button onclick="addItem()">Add Item</button>
+<button onclick="clearItems()">Clear All</button>
+
+<h3>Inventory List</h3>
+<ul id="itemList"></ul>
+
+<h3>Inventory Chart</h3>
+<canvas id="myChart" width="400" height="200"></canvas>
+
+</div>
+
+<script>
+
+let items = JSON.parse(localStorage.getItem("inventory")) || [];
+let chart;
+
+displayItems();
+
+function addItem() {
+
+    let name = document.getElementById("itemName").value.trim();
+    let quantity = Number(document.getElementById("itemQuantity").value);
+
+    if (name === "" || isNaN(quantity) || quantity < 0) {
+        alert("Enter valid name and quantity.");
+        return;
+    }
+
+    let exists = items.find(item => item.name.toLowerCase() === name.toLowerCase());
+    if (exists) {
+        alert("Item already exists.");
+        return;
+    }
+
+    items.push({ name: name, quantity: quantity });
+
+    localStorage.setItem("inventory", JSON.stringify(items));
+
+    document.getElementById("itemName").value = "";
+    document.getElementById("itemQuantity").value = "";
+
+    displayItems();
+}
+
+function clearItems() {
+    items = [];
+    localStorage.removeItem("inventory");
+    displayItems();
+}
+
+function displayItems() {
+
+    let list = document.getElementById("itemList");
+    list.innerHTML = "";
+
+    items.forEach(item => {
+        let li = document.createElement("li");
+        li.textContent = item.name + " - " + item.quantity;
+
+        // 🔴 Low stock styling
+        if (item.quantity < 10) {
+            li.style.color = "red";
+            li.style.fontWeight = "bold";
+        }
+
+        list.appendChild(li);
+    });
+
+    updateChart();
+}
+
+function updateChart() {
+
+    let ctx = document.getElementById("myChart").getContext("2d");
+
+    if (chart) {
+        chart.destroy();
+    }
+
+    chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: items.map(item => item.name),
+            datasets: [{
+                label: "Quantity",
+                data: items.map(item => item.quantity),
+                backgroundColor: items.map(item =>
+                    item.quantity < 10 ? "red" : "blue"
+                )
+            }]
+        }
+    });
+}
+
+</script>
+
+</body>
+</html>
